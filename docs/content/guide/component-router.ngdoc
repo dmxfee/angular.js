@@ -5,6 +5,11 @@
 
 # Component Router
 
+<div class="alert alert-info">
+**Deprecation Notice:** In an effort to keep synchronized with router changes in Angular 2, this implementation of the Component Router (ngComponentRouter module) has been deprecated and will not receive further updates.
+We are investigating backporting the Angular 2 Router to Angular 1, but alternatively, use the {@link ngRoute} module or community developed projects (e.g. [ui-router](https://github.com/angular-ui/ui-router)).
+</div>
+
 This guide describes the new Component Router for AngularJS 1.5.
 
 <div class="alert alert-info">
@@ -225,8 +230,8 @@ You can see the complete application running below.
 
       this.getHero = function(id) {
         return heroesPromise.then(function(heroes) {
-          for(var i=0; i<heroes.length; i++) {
-            if ( heroes[i].id == id) return heroes[i];
+          for (var i = 0; i < heroes.length; i++) {
+            if (heroes[i].id === id) return heroes[i];
           }
         });
       };
@@ -245,7 +250,7 @@ You can see the complete application running below.
       };
 
       this.isSelected = function(hero) {
-        return (hero.id == selectedId);
+        return (hero.id === selectedId);
       };
     }
 
@@ -316,8 +321,8 @@ You can see the complete application running below.
 
       this.getCrisis = function(id) {
         return crisesPromise.then(function(crises) {
-          for(var i=0; i<crises.length; i++) {
-            if ( crises[i].id == id) return crises[i];
+          for (var i = 0; i < crises.length; i++) {
+            if (crises[i].id === id) return crises[i];
           }
         });
       };
@@ -337,7 +342,7 @@ You can see the complete application running below.
       };
 
       this.isSelected = function(crisis) {
-        return (crisis.id == selectedId);
+        return (crisis.id === selectedId);
       };
 
       this.onSelect = function(crisis) {
@@ -467,8 +472,8 @@ AngularJS itself via npm:
 
 ```bash
 npm init
-npm install@1.5.x angular --save
-npm install @angular/router --save
+npm install angular@1.5.x --save
+npm install @angular/router@0.2.0 --save
 ```
 
 
@@ -482,6 +487,14 @@ Just like any Angular application, we load the JavaScript files into our `index.
   <script src="/app/app.js"></script>
 ```
 
+You also need to include ES6 shims for browsers that do not support ES6 code (Internet Explorer,
+ iOs < 8, Android < 5.0, Windows Mobile < 10):
+ ```html
+ <!-- IE required polyfills, in this exact order -->
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.33.3/es6-shim.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.20/system-polyfills.js"></script>
+ <script src="https://npmcdn.com/angular2/es6/dev/src/testing/shims_for_IE.js"></script>
+ ```
 
 ## Create the `app` module
 
@@ -658,7 +671,7 @@ because the `HeroList` and `HeroDetail` will not contain any child routes.
 
 The `component` property in a **Route Definition** defines the **Component** directive that will be rendered
 into the DOM via the **Outlet**. For example the `heroDetail` **Component** will be rendered into the page
-where the `<ng-outlet></ng-outlet>` lives as `<hero-detail></hero-detail>.
+where the `<ng-outlet></ng-outlet>` lives as `<hero-detail></hero-detail>`.
 
 The `name` property is used to reference the **Route Definition** when generating URLs or navigating to
 **Routes**. For example this link will `<a ng-link="['Heroes']">Heroes</a>` navigate the **Route Definition**
@@ -712,8 +725,8 @@ function HeroService($q) {
 
   this.getHero = function(id) {
     return heroesPromise.then(function(heroes) {
-      for(var i=0; i<heroes.length; i++) {
-        if ( heroes[i].id == id) return heroes[i];
+      for (var i = 0; i < heroes.length; i++) {
+        if (heroes[i].id === id) return heroes[i];
       }
     });
   };
@@ -736,7 +749,7 @@ The **Lifecycle Hooks** that can be implemented as instance methods on the **Com
 
 * `$routerCanReuse` : called to to determine whether a **Component** can be reused across **Route Definitions**
   that match the same type of **Component**, or whether to destroy and instantiate a new **Component** every time.
-* `$routerOnActivate` / `$routeOnReuse` : called by the **Router** at the end of a successful navigation. Only
+* `$routerOnActivate` / `$routerOnReuse` : called by the **Router** at the end of a successful navigation. Only
   one of `$routerOnActivate` and `$routerOnReuse` will be called depending upon the result of a call to
   `$routerCanReuse`.
 * `$routerCanDeactivate` : called by the **Router** to determine if a **Component** can be removed as part of a
@@ -854,7 +867,6 @@ Router itself, which was made available by the binding in the **Component Defini
 function HeroDetailComponent(heroService) {
   ...
   this.gotoHeroes = function() {
-    var heroId = this.hero && this.hero.id;
     this.$router.navigate(['HeroList']);
   };
 ```
@@ -912,7 +924,7 @@ function HeroListComponent(heroService) {
   };
 
   this.isSelected = function(hero) {
-    return (hero.id == selectedId);
+    return (hero.id === selectedId);
   };
 }
 ```

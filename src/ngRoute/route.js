@@ -1,5 +1,12 @@
 'use strict';
 
+/* global shallowCopy: false */
+
+// There are necessary for `shallowCopy()` (included via `src/shallowCopy.js`).
+// They are initialized inside the `$RouteProvider`, to ensure `window.angular` is available.
+var isArray;
+var isObject;
+
 /**
  * @ngdoc module
  * @name ngRoute
@@ -23,6 +30,7 @@ var ngRouteModule = angular.module('ngRoute', ['ng']).
 /**
  * @ngdoc provider
  * @name $routeProvider
+ * @this
  *
  * @description
  *
@@ -35,6 +43,9 @@ var ngRouteModule = angular.module('ngRoute', ['ng']).
  * Requires the {@link ngRoute `ngRoute`} module to be installed.
  */
 function $RouteProvider() {
+  isArray = angular.isArray;
+  isObject = angular.isObject;
+
   function inherit(parent, extra) {
     return angular.extend(Object.create(parent), extra);
   }
@@ -154,7 +165,7 @@ function $RouteProvider() {
    */
   this.when = function(path, route) {
     //copy original route object to preserve params inherited from proto chain
-    var routeCopy = angular.copy(route);
+    var routeCopy = shallowCopy(route);
     if (angular.isUndefined(routeCopy.reloadOnSearch)) {
       routeCopy.reloadOnSearch = true;
     }
@@ -168,7 +179,7 @@ function $RouteProvider() {
 
     // create redirection for trailing slashes
     if (path) {
-      var redirectPath = (path[path.length - 1] == '/')
+      var redirectPath = (path[path.length - 1] === '/')
             ? path.substr(0, path.length - 1)
             : path + '/';
 
@@ -346,12 +357,12 @@ function $RouteProvider() {
      *      })
      *
      *      .controller('BookController', function($scope, $routeParams) {
-     *          $scope.name = "BookController";
+     *          $scope.name = 'BookController';
      *          $scope.params = $routeParams;
      *      })
      *
      *      .controller('ChapterController', function($scope, $routeParams) {
-     *          $scope.name = "ChapterController";
+     *          $scope.name = 'ChapterController';
      *          $scope.params = $routeParams;
      *      })
      *
@@ -384,15 +395,15 @@ function $RouteProvider() {
      *     it('should load and compile correct template', function() {
      *       element(by.linkText('Moby: Ch1')).click();
      *       var content = element(by.css('[ng-view]')).getText();
-     *       expect(content).toMatch(/controller\: ChapterController/);
-     *       expect(content).toMatch(/Book Id\: Moby/);
-     *       expect(content).toMatch(/Chapter Id\: 1/);
+     *       expect(content).toMatch(/controller: ChapterController/);
+     *       expect(content).toMatch(/Book Id: Moby/);
+     *       expect(content).toMatch(/Chapter Id: 1/);
      *
      *       element(by.partialLinkText('Scarlet')).click();
      *
      *       content = element(by.css('[ng-view]')).getText();
-     *       expect(content).toMatch(/controller\: BookController/);
-     *       expect(content).toMatch(/Book Id\: Scarlet/);
+     *       expect(content).toMatch(/controller: BookController/);
+     *       expect(content).toMatch(/Book Id: Scarlet/);
      *     });
      *   </file>
      * </example>
@@ -599,38 +610,10 @@ function $RouteProvider() {
         }
 
         $q.when(nextRoute).
-          then(function() {
-            if (nextRoute) {
-              var locals = angular.extend({}, nextRoute.resolve),
-                  template, templateUrl;
-
-              angular.forEach(locals, function(value, key) {
-                locals[key] = angular.isString(value) ?
-                    $injector.get(value) : $injector.invoke(value, null, null, key);
-              });
-
-              if (angular.isDefined(template = nextRoute.template)) {
-                if (angular.isFunction(template)) {
-                  template = template(nextRoute.params);
-                }
-              } else if (angular.isDefined(templateUrl = nextRoute.templateUrl)) {
-                if (angular.isFunction(templateUrl)) {
-                  templateUrl = templateUrl(nextRoute.params);
-                }
-                if (angular.isDefined(templateUrl)) {
-                  nextRoute.loadedTemplateUrl = $sce.valueOf(templateUrl);
-                  template = $templateRequest(templateUrl);
-                }
-              }
-              if (angular.isDefined(template)) {
-                locals['$template'] = template;
-              }
-              return $q.all(locals);
-            }
-          }).
+          then(resolveLocals).
           then(function(locals) {
             // after route change
-            if (nextRoute == $route.current) {
+            if (nextRoute === $route.current) {
               if (nextRoute) {
                 nextRoute.locals = locals;
                 angular.copy(nextRoute.params, $routeParams);
@@ -638,11 +621,46 @@ function $RouteProvider() {
               $rootScope.$broadcast('$routeChangeSuccess', nextRoute, lastRoute);
             }
           }, function(error) {
-            if (nextRoute == $route.current) {
+            if (nextRoute === $route.current) {
               $rootScope.$broadcast('$routeChangeError', nextRoute, lastRoute, error);
             }
           });
       }
+    }
+
+    function resolveLocals(route) {
+      if (route) {
+        var locals = angular.extend({}, route.resolve);
+        angular.forEach(locals, function(value, key) {
+          locals[key] = angular.isString(value) ?
+              $injector.get(value) :
+              $injector.invoke(value, null, null, key);
+        });
+        var template = getTemplateFor(route);
+        if (angular.isDefined(template)) {
+          locals['$template'] = template;
+        }
+        return $q.all(locals);
+      }
+    }
+
+
+    function getTemplateFor(route) {
+      var template, templateUrl;
+      if (angular.isDefined(template = route.template)) {
+        if (angular.isFunction(template)) {
+          template = template(route.params);
+        }
+      } else if (angular.isDefined(templateUrl = route.templateUrl)) {
+        if (angular.isFunction(templateUrl)) {
+          templateUrl = templateUrl(route.params);
+        }
+        if (angular.isDefined(templateUrl)) {
+          route.loadedTemplateUrl = $sce.valueOf(templateUrl);
+          template = $templateRequest(templateUrl);
+        }
+      }
+      return template;
     }
 
 

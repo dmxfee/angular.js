@@ -92,7 +92,12 @@ function MockWindow(options) {
     },
     replaceState: function(state, title, url) {
       locationHref = url;
+      if (!options.updateAsync) committedHref = locationHref;
       mockWindow.history.state = copy(state);
+      if (!options.updateAsync) this.flushHref();
+    },
+    flushHref: function() {
+      committedHref = locationHref;
     }
   };
   // IE 10-11 deserialize history.state on each read making subsequent reads
@@ -121,10 +126,10 @@ function MockDocument() {
   this.basePath = '/';
 
   this.find = function(name) {
-    if (name == 'base') {
+    if (name === 'base') {
       return {
         attr: function(name) {
-          if (name == 'href') {
+          if (name === 'href') {
             return self.basePath;
           } else {
             throw new Error(name);
@@ -332,7 +337,7 @@ describe('browser', function() {
       expect(locationReplace).not.toHaveBeenCalled();
     });
 
-    it("should retain the # character when the only change is clearing the hash fragment, to prevent page reload", function() {
+    it('should retain the # character when the only change is clearing the hash fragment, to prevent page reload', function() {
       sniffer.history = true;
 
       browser.url('http://server/#123');
@@ -379,8 +384,8 @@ describe('browser', function() {
     });
 
     it('should decode single quotes to work around FF bug 407273', function() {
-      fakeWindow.location.href = "http://ff-bug/?single%27quote";
-      expect(browser.url()).toBe("http://ff-bug/?single'quote");
+      fakeWindow.location.href = 'http://ff-bug/?single%27quote';
+      expect(browser.url()).toBe('http://ff-bug/?single\'quote');
     });
 
     it('should not set URL when the URL is already set', function() {
@@ -439,6 +444,40 @@ describe('browser', function() {
       function hashListener() {
         hashInHashChangeEvent.push(realWin.location.hash);
       }
+    });
+
+  });
+
+  describe('url (with ie 11 weirdnesses)', function() {
+
+    it('url() should actually set the url, even if IE 11 is weird and replaces HTML entities in the URL', function() {
+      // this test can not be expressed with the Jasmine spies in the previous describe block, because $browser.url()
+      // needs to observe the change to location.href during its invocation to enter the failing code path, but the spies
+      // are not callThrough
+
+      sniffer.history = true;
+      var originalReplace = fakeWindow.location.replace;
+      fakeWindow.location.replace = function(url) {
+        url = url.replace('&not', '¬');
+        // I really don't know why IE 11 (sometimes) does this, but I am not the only one to notice:
+        // https://connect.microsoft.com/IE/feedback/details/1040980/bug-in-ie-which-interprets-document-location-href-as-html
+        originalReplace.call(this, url);
+      };
+
+      // the initial URL contains a lengthy oauth token in the hash
+      var initialUrl = 'http://test.com/oauthcallback#state=xxx%3D&not-before-policy=0';
+      fakeWindow.location.href = initialUrl;
+      browser = new Browser(fakeWindow, fakeDocument, fakeLog, sniffer);
+
+      // somehow, $location gets a version of this url where the = is no longer escaped, and tells the browser:
+      var initialUrlFixedByLocation = initialUrl.replace('%3D', '=');
+      browser.url(initialUrlFixedByLocation, true, null);
+      expect(browser.url()).toEqual(initialUrlFixedByLocation);
+
+      // a little later (but in the same digest cycle) the view asks $location to replace the url, which tells $browser
+      var secondUrl = 'http://test.com/otherView';
+      browser.url(secondUrl, true, null);
+      expect(browser.url()).toEqual(secondUrl);
     });
 
   });
@@ -694,7 +733,7 @@ describe('browser', function() {
     });
 
 
-    it("should stop calling callbacks when application has been torn down", function() {
+    it('should stop calling callbacks when application has been torn down', function() {
       sniffer.history = true;
       browser.onUrlChange(callback);
       fakeWindow.location.href = 'http://server/new';
@@ -716,7 +755,7 @@ describe('browser', function() {
     var jqDocHead;
 
     beforeEach(function() {
-      jqDocHead = jqLite(document).find('head');
+      jqDocHead = jqLite(window.document).find('head');
     });
 
     it('should return value from <base href>', function() {

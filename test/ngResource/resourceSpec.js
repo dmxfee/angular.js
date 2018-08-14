@@ -1,8 +1,8 @@
 'use strict';
 
-describe("resource", function() {
+describe('resource', function() {
 
-describe("basic usage", function() {
+describe('basic usage', function() {
   var $resource, CreditCard, callback, $httpBackend, resourceProvider;
 
   beforeEach(module('ngResource'));
@@ -30,7 +30,7 @@ describe("basic usage", function() {
       }
 
     });
-    callback = jasmine.createSpy();
+    callback = jasmine.createSpy('callback');
   }));
 
 
@@ -98,7 +98,7 @@ describe("basic usage", function() {
   });
 
 
-  it("should build resource", function() {
+  it('should build resource', function() {
     expect(typeof CreditCard).toBe('function');
     expect(typeof CreditCard.get).toBe('function');
     expect(typeof CreditCard.save).toBe('function');
@@ -140,14 +140,14 @@ describe("basic usage", function() {
     it('should omit properties from prototype chain', function() {
       var original, clone = {};
       function Func() {}
-      Func.prototype.hello = "world";
+      Func.prototype.hello = 'world';
 
       original = new Func();
-      original.goodbye = "world";
+      original.goodbye = 'world';
 
       expect(shallowClearAndCopy(original, clone)).toBe(clone);
       expect(clone.hello).toBeUndefined();
-      expect(clone.goodbye).toBe("world");
+      expect(clone.goodbye).toBe('world');
     });
   });
 
@@ -382,7 +382,7 @@ describe("basic usage", function() {
   });
 
 
-  it("should build resource with action default param overriding default param", function() {
+  it('should build resource with action default param overriding default param', function() {
     $httpBackend.expect('GET', '/Customer/123').respond({id: 'abc'});
     var TypeItem = $resource('/:type/:typeId', {type: 'Order'},
                                   {get: {method: 'GET', params: {type: 'Customer'}}});
@@ -427,11 +427,11 @@ describe("basic usage", function() {
   it('should throw an exception if a param is called "hasOwnProperty"', function() {
     expect(function() {
       $resource('/:hasOwnProperty').get();
-    }).toThrowMinErr('$resource','badname', "hasOwnProperty is not a valid parameter name");
+    }).toThrowMinErr('$resource','badname', 'hasOwnProperty is not a valid parameter name');
   });
 
 
-  it("should create resource", function() {
+  it('should create resource', function() {
     $httpBackend.expect('POST', '/CreditCard', '{"name":"misko"}').respond({id: 123, name: 'misko'});
 
     var cc = CreditCard.save({name: 'misko'}, callback);
@@ -446,7 +446,7 @@ describe("basic usage", function() {
   });
 
 
-  it("should read resource", function() {
+  it('should read resource', function() {
     $httpBackend.expect('GET', '/CreditCard/123').respond({id: 123, number: '9876'});
     var cc = CreditCard.get({id: 123}, callback);
 
@@ -463,14 +463,14 @@ describe("basic usage", function() {
 
   it('should send correct headers', function() {
     $httpBackend.expectPUT('/CreditCard/123', undefined, function(headers) {
-      return headers['If-None-Match'] == "*";
+      return headers['If-None-Match'] === '*';
     }).respond({id:123});
 
     CreditCard.conditionalPut({id: {key:123}});
   });
 
 
-  it("should read partial resource", function() {
+  it('should read partial resource', function() {
     $httpBackend.expect('GET', '/CreditCard').respond([{id:{key:123}}]);
     var ccs = CreditCard.query();
 
@@ -490,7 +490,7 @@ describe("basic usage", function() {
   });
 
 
-  it("should update resource", function() {
+  it('should update resource', function() {
     $httpBackend.expect('POST', '/CreditCard/123', '{"id":{"key":123},"name":"misko"}').
                  respond({id: {key: 123}, name: 'rama'});
 
@@ -501,7 +501,7 @@ describe("basic usage", function() {
   });
 
 
-  it("should query resource", function() {
+  it('should query resource', function() {
     $httpBackend.expect('GET', '/CreditCard?key=value').respond([{id: 1}, {id: 2}]);
 
     var ccs = CreditCard.query({key: 'value'}, callback);
@@ -515,7 +515,7 @@ describe("basic usage", function() {
   });
 
 
-  it("should have all arguments optional", function() {
+  it('should have all arguments optional', function() {
     $httpBackend.expect('GET', '/CreditCard').respond([{id:1}]);
 
     var log = '';
@@ -562,7 +562,7 @@ describe("basic usage", function() {
   });
 
 
-  it("should patch a resource", function() {
+  it('should patch a resource', function() {
     $httpBackend.expectPATCH('/CreditCard/123', '{"name":"igor"}').
                      respond({id: 123, name: 'rama'});
 
@@ -615,10 +615,25 @@ describe("basic usage", function() {
 
   it('should bind default parameters', function() {
     $httpBackend.expect('GET', '/CreditCard/123.visa?minimum=0.05').respond({id: 123});
-    var Visa = CreditCard.bind({verb:'.visa', minimum:0.05});
-    var visa = Visa.get({id:123});
+    var Visa = CreditCard.bind({verb: '.visa', minimum: 0.05});
+    var visa = Visa.get({id: 123});
     $httpBackend.flush();
-    expect(visa).toEqualData({id:123});
+    expect(visa).toEqualData({id: 123});
+  });
+
+
+  it('should pass all original arguments when binding default params', function() {
+    $httpBackend.expect('GET', '/CancellableCreditCard/123.visa').respond({id: 123});
+
+    var CancellableCreditCard = $resource('/CancellableCreditCard/:id:verb', {},
+                                          {charge: {method: 'POST'}}, {cancellable: true});
+    var CancellableVisa = CancellableCreditCard.bind({verb: '.visa'});
+    var visa = CancellableVisa.get({id: 123});
+
+    $httpBackend.flush();
+
+    expect(visa.$charge).toEqual(jasmine.any(Function));
+    expect(visa.$cancelRequest).toEqual(jasmine.any(Function));
   });
 
 
@@ -626,13 +641,38 @@ describe("basic usage", function() {
     var currentGroup = 'students',
         Person = $resource('/Person/:group/:id', { group: function() { return currentGroup; }});
 
-
     $httpBackend.expect('GET', '/Person/students/fedor').respond({id: 'fedor', email: 'f@f.com'});
 
     var fedor = Person.get({id: 'fedor'});
     $httpBackend.flush();
 
     expect(fedor).toEqualData({id: 'fedor', email: 'f@f.com'});
+  });
+
+
+  it('should pass resource object to dynamic default parameters', function() {
+    var Person = $resource('/Person/:id', {
+      id: function(data) {
+        return data ? data.id : 'fedor';
+      }
+    });
+
+    $httpBackend.expect('GET', '/Person/fedor').respond(
+        {id: 'fedor', email: 'f@f.com', count: 1});
+
+    var fedor = Person.get();
+    $httpBackend.flush();
+
+    expect(fedor).toEqualData({id: 'fedor', email: 'f@f.com', count: 1});
+
+    $httpBackend.expect('POST', '/Person/fedor2').respond(
+        {id: 'fedor2', email: 'f2@f.com', count: 2});
+
+    fedor.id = 'fedor2';
+    fedor.$save();
+    $httpBackend.flush();
+
+    expect(fedor).toEqualData({id: 'fedor2', email: 'f2@f.com', count: 2});
   });
 
 
@@ -861,6 +901,7 @@ describe("basic usage", function() {
         expect(cc.url).toBe('/new-id');
       });
 
+
       it('should pass the same transformed value to success callbacks and to promises', function() {
         $httpBackend.expect('GET', '/CreditCard').respond(200, { value: 'original' });
 
@@ -978,6 +1019,7 @@ describe("basic usage", function() {
       });
     });
 
+
     it('should allow per action response interceptor that gets full response', function() {
       CreditCard = $resource('/CreditCard', {}, {
         query: {
@@ -1033,8 +1075,107 @@ describe("basic usage", function() {
       expect(response.status).toBe(404);
       expect(response.config).toBeDefined();
     });
+
+
+    it('should fulfill the promise with the value returned by the responseError interceptor',
+      inject(function($q) {
+        CreditCard = $resource('/CreditCard', {}, {
+          test1: {
+            method: 'GET',
+            interceptor: {responseError: function() { return 'foo'; }}
+          },
+          test2: {
+            method: 'GET',
+            interceptor: {responseError: function() { return $q.resolve('bar'); }}
+          },
+          test3: {
+            method: 'GET',
+            interceptor: {responseError: function() { return $q.reject('baz'); }}
+          }
+        });
+
+        $httpBackend.whenGET('/CreditCard').respond(404);
+
+        callback.calls.reset();
+        CreditCard.test1().$promise.then(callback);
+        $httpBackend.flush();
+
+        expect(callback).toHaveBeenCalledOnceWith('foo');
+
+        callback.calls.reset();
+        CreditCard.test2().$promise.then(callback);
+        $httpBackend.flush();
+
+        expect(callback).toHaveBeenCalledOnceWith('bar');
+
+        callback.calls.reset();
+        CreditCard.test3().$promise.then(null, callback);
+        $httpBackend.flush();
+
+        expect(callback).toHaveBeenCalledOnceWith('baz');
+      })
+    );
   });
 
+
+  describe('success mode', function() {
+    it('should call the success callback (as 1st argument) on 2xx responses', function() {
+      var instance, headers, status, statusText;
+      var successCb = jasmine.createSpy('successCb').and.callFake(function(d, h, s, t) {
+        expect(d).toBe(instance);
+        expect(h()).toEqual(jasmine.objectContaining(headers));
+        expect(s).toBe(status);
+        expect(t).toBe(statusText);
+      });
+
+      instance = CreditCard.get(successCb);
+      headers = {foo: 'bar'};
+      status = 200;
+      statusText = 'OK';
+      $httpBackend.expect('GET', '/CreditCard').respond(status, {}, headers, statusText);
+      $httpBackend.flush();
+
+      expect(successCb).toHaveBeenCalledOnce();
+
+      instance = CreditCard.get(successCb);
+      headers = {baz: 'qux'};
+      status = 299;
+      statusText = 'KO';
+      $httpBackend.expect('GET', '/CreditCard').respond(status, {}, headers, statusText);
+      $httpBackend.flush();
+
+      expect(successCb).toHaveBeenCalledTimes(2);
+    });
+
+
+    it('should call the success callback (as 2nd argument) on 2xx responses', function() {
+      var instance, headers, status, statusText;
+      var successCb = jasmine.createSpy('successCb').and.callFake(function(d, h, s, t) {
+        expect(d).toBe(instance);
+        expect(h()).toEqual(jasmine.objectContaining(headers));
+        expect(s).toBe(status);
+        expect(t).toBe(statusText);
+      });
+
+      instance = CreditCard.get({id: 123}, successCb);
+      headers = {foo: 'bar'};
+      status = 200;
+      statusText = 'OK';
+      $httpBackend.expect('GET', '/CreditCard/123').respond(status, {}, headers, statusText);
+      $httpBackend.flush();
+
+      expect(successCb).toHaveBeenCalledOnce();
+
+      instance = CreditCard.get({id: 456}, successCb);
+      headers = {baz: 'qux'};
+      status = 299;
+      statusText = 'KO';
+      $httpBackend.expect('GET', '/CreditCard/456').respond(status, {}, headers, statusText);
+      $httpBackend.flush();
+
+      expect(successCb).toHaveBeenCalledTimes(2);
+    });
+  });
 
   describe('failure mode', function() {
     var ERROR_CODE = 500,
@@ -1140,10 +1281,10 @@ describe("basic usage", function() {
       });
 
       it('should not convert string literals in array into Resource objects', function() {
-        $httpBackend.expect('GET', '/names.json').respond(["mary", "jane"]);
+        $httpBackend.expect('GET', '/names.json').respond(['mary', 'jane']);
         var strings = $resource('/names.json').query();
         $httpBackend.flush();
-        expect(strings).toEqualData(["mary", "jane"]);
+        expect(strings).toEqualData(['mary', 'jane']);
       });
 
       it('should not convert number literals in array into Resource objects', function() {
@@ -1200,7 +1341,7 @@ describe("basic usage", function() {
       });
     });
 
-    describe("save", function() {
+    describe('save', function() {
       it('should append the suffix', function() {
         $httpBackend.expect('POST', '/users.json', '{"name":"user1"}').respond({id: 123, name: 'user1'});
         var UserService = $resource('/users/:user_id.json', {user_id: '@id'});
@@ -1345,9 +1486,9 @@ describe('errors', function() {
 
     expect(successSpy).not.toHaveBeenCalled();
     expect(failureSpy).toHaveBeenCalled();
-    expect(failureSpy.calls.mostRecent().args[0]).toMatch(
-        /^\[\$resource:badcfg\] Error in resource configuration for action `query`\. Expected response to contain an array but got an object \(Request: GET \/Customer\/123\)/
-      );
+    expect(failureSpy.calls.mostRecent().args[0]).toEqualMinErr('$resource', 'badcfg',
+        'Error in resource configuration for action `query`. ' +
+        'Expected response to contain an array but got an object (Request: GET /Customer/123)');
   });
 
   it('should fail if action expects an array but response is an object', function() {
@@ -1362,9 +1503,36 @@ describe('errors', function() {
 
     expect(successSpy).not.toHaveBeenCalled();
     expect(failureSpy).toHaveBeenCalled();
-    expect(failureSpy.calls.mostRecent().args[0]).toMatch(
-        /^\[\$resource:badcfg\] Error in resource configuration for action `get`\. Expected response to contain an object but got an array \(Request: GET \/Customer\/123\)/
-      );
+    expect(failureSpy.calls.mostRecent().args[0]).toEqualMinErr('$resource', 'badcfg',
+        'Error in resource configuration for action `get`. ' +
+        'Expected response to contain an object but got an array (Request: GET /Customer/123)');
+  });
+});
+
+describe('handling rejections', function() {
+  var $httpBackend;
+  var $resource;
+
+  beforeEach(module('ngResource'));
+
+  beforeEach(inject(function(_$httpBackend_, _$resource_) {
+    $httpBackend = _$httpBackend_;
+    $resource = _$resource_;
+
+    $httpBackend.whenGET('/CreditCard').respond(404);
+  }));
+
+
+  it('should reject the promise even when there is an error callback', function() {
+    var errorCb1 = jasmine.createSpy('errorCb1');
+    var errorCb2 = jasmine.createSpy('errorCb2');
+    var CreditCard = $resource('/CreditCard');
+
+    CreditCard.get(noop, errorCb1).$promise['catch'](errorCb2);
+    $httpBackend.flush();
+
+    expect(errorCb1).toHaveBeenCalledOnce();
+    expect(errorCb2).toHaveBeenCalledOnce();
   });
 });
 

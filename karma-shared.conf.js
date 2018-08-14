@@ -37,12 +37,12 @@ module.exports = function(config, specificOptions) {
       'SL_Chrome': {
         base: 'SauceLabs',
         browserName: 'chrome',
-        version: '47'
+        version: '51'
       },
       'SL_Firefox': {
         base: 'SauceLabs',
         browserName: 'firefox',
-        version: '43'
+        version: '47'
       },
       'SL_Safari_8': {
         base: 'SauceLabs',
@@ -75,10 +75,10 @@ module.exports = function(config, specificOptions) {
         version: '11'
       },
       'SL_iOS': {
-        base: "SauceLabs",
-        browserName: "iphone",
-        platform: "OS X 10.10",
-        version: "8.1"
+        base: 'SauceLabs',
+        browserName: 'iphone',
+        platform: 'OS X 10.10',
+        version: '8.1'
       },
 
       'BS_Chrome': {
@@ -170,8 +170,8 @@ module.exports = function(config, specificOptions) {
     '/someSanitizedUrl',
     '/{{testUrl}}'
   ];
-  var log4js = require('./node_modules/karma/node_modules/log4js');
-  var layouts = require('./node_modules/karma/node_modules/log4js/lib/layouts');
+  var log4js = require('log4js');
+  var layouts = require('log4js/lib/layouts');
   var originalConfigure = log4js.configure;
   log4js.configure = function(log4jsConfig) {
     var consoleAppender = log4jsConfig.appenders.shift();
