@@ -36,7 +36,7 @@
  * upon tap. (Event object is available as `$event`)
  *
  * @example
-    <example module="ngClickExample" deps="angular-touch.js">
+    <example module="ngClickExample" deps="angular-touch.js" name="ng-touch-ng-click">
       <file name="index.html">
         <button ng-click="count = count + 1" ng-init="count=0">
           Increment
@@ -161,7 +161,9 @@ var ngTouchClickDirectiveFactory = ['$parse', '$timeout', '$rootElement',
     event.preventDefault();
 
     // Blur focused form elements
-    event.target && event.target.blur && event.target.blur();
+    if (event.target && event.target.blur) {
+      event.target.blur();
+    }
   }
 
 
@@ -176,7 +178,7 @@ var ngTouchClickDirectiveFactory = ['$parse', '$timeout', '$rootElement',
     $timeout(function() {
       // Remove the allowable region.
       for (var i = 0; i < touchCoordinates.length; i += 2) {
-        if (touchCoordinates[i] == x && touchCoordinates[i + 1] == y) {
+        if (touchCoordinates[i] === x && touchCoordinates[i + 1] === y) {
           touchCoordinates.splice(i, i + 2);
           return;
         }
@@ -216,7 +218,7 @@ var ngTouchClickDirectiveFactory = ['$parse', '$timeout', '$rootElement',
       tapping = true;
       tapElement = event.target ? event.target : event.srcElement; // IE uses srcElement.
       // Hack for Safari, which can target text nodes instead of containers.
-      if (tapElement.nodeType == 3) {
+      if (tapElement.nodeType === 3) {
         tapElement = tapElement.parentNode;
       }
 

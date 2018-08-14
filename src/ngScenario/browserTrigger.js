@@ -40,7 +40,7 @@
       }[inputType || '_default_'];
     }
 
-    if (nodeName == 'option') {
+    if (nodeName === 'option') {
       element.parentNode.value = element.value;
       element = element.parentNode;
       eventType = 'change';
@@ -54,32 +54,41 @@
     var evnt;
     if (/transitionend/.test(eventType)) {
       if (window.WebKitTransitionEvent) {
-        evnt = new WebKitTransitionEvent(eventType, eventData);
+        evnt = new window.WebKitTransitionEvent(eventType, eventData);
         evnt.initEvent(eventType, false, true);
       } else {
         try {
-          evnt = new TransitionEvent(eventType, eventData);
-        }
-        catch (e) {
+          evnt = new window.TransitionEvent(eventType, eventData);
+        } catch (e) {
           evnt = window.document.createEvent('TransitionEvent');
           evnt.initTransitionEvent(eventType, null, null, null, eventData.elapsedTime || 0);
         }
       }
     } else if (/animationend/.test(eventType)) {
       if (window.WebKitAnimationEvent) {
-        evnt = new WebKitAnimationEvent(eventType, eventData);
+        evnt = new window.WebKitAnimationEvent(eventType, eventData);
         evnt.initEvent(eventType, false, true);
       } else {
         try {
-          evnt = new AnimationEvent(eventType, eventData);
-        }
-        catch (e) {
+          evnt = new window.AnimationEvent(eventType, eventData);
+        } catch (e) {
           evnt = window.document.createEvent('AnimationEvent');
           evnt.initAnimationEvent(eventType, null, null, null, eventData.elapsedTime || 0);
         }
       }
     } else if (/touch/.test(eventType) && supportsTouchEvents()) {
       evnt = createTouchEvent(element, eventType, x, y);
+    } else if (/key/.test(eventType)) {
+      evnt = window.document.createEvent('Events');
+      evnt.initEvent(eventType, eventData.bubbles, eventData.cancelable);
+      evnt.view = window;
+      evnt.ctrlKey = pressed('ctrl');
+      evnt.altKey = pressed('alt');
+      evnt.shiftKey = pressed('shift');
+      evnt.metaKey = pressed('meta');
+      evnt.keyCode = eventData.keyCode;
+      evnt.charCode = eventData.charCode;
+      evnt.which = eventData.which;
     } else {
       evnt = window.document.createEvent('MouseEvents');
       x = x || 0;
@@ -108,7 +117,12 @@
       return originalPreventDefault.apply(evnt, arguments);
     };
 
-    element.dispatchEvent(evnt);
+    if (!eventData.bubbles || supportsEventBubblingInDetachedTree() || isAttachedToDocument(element)) {
+      element.dispatchEvent(evnt);
+    } else {
+      triggerForPath(element, evnt);
+    }
+
     finalProcessDefault = !(angular['ff-684208-preventDefault'] || !fakeProcessDefault);
 
     delete angular['ff-684208-preventDefault'];
@@ -146,4 +160,53 @@
 
     return evnt;
   }
-}());
+
+  function supportsEventBubblingInDetachedTree() {
+    if ('_cached' in supportsEventBubblingInDetachedTree) {
+      return supportsEventBubblingInDetachedTree._cached;
+    }
+    supportsEventBubblingInDetachedTree._cached = false;
+    var doc = window.document;
+    if (doc) {
+      var parent = doc.createElement('div'),
+          child = parent.cloneNode();
+      parent.appendChild(child);
+      parent.addEventListener('e', function() {
+        supportsEventBubblingInDetachedTree._cached = true;
+      });
+      var evnt = window.document.createEvent('Events');
+      evnt.initEvent('e', true, true);
+      child.dispatchEvent(evnt);
+    }
+    return supportsEventBubblingInDetachedTree._cached;
+  }
+
+  function triggerForPath(element, evnt) {
+    var stop = false;
+
+    var _stopPropagation = evnt.stopPropagation;
+    evnt.stopPropagation = function() {
+      stop = true;
+      _stopPropagation.apply(evnt, arguments);
+    };
+    patchEventTargetForBubbling(evnt, element);
+    do {
+      element.dispatchEvent(evnt);
+      // eslint-disable-next-line no-unmodified-loop-condition
+    } while (!stop && (element = element.parentNode));
+  }
+
+  function patchEventTargetForBubbling(event, target) {
+    event._target = target;
+    Object.defineProperty(event, 'target', {get: function() { return this._target;}});
+  }
+
+  function isAttachedToDocument(element) {
+    while ((element = element.parentNode)) {
+        if (element === window) {
+            return true;
+        }
+    }
+    return false;
+  }
+})();

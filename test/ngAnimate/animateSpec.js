@@ -1,6 +1,6 @@
 'use strict';
 
-describe("animations", function() {
+describe('animations', function() {
 
   beforeEach(module('ngAnimate'));
   beforeEach(module('ngAnimateMock'));
@@ -13,7 +13,7 @@ describe("animations", function() {
     };
   }));
 
-  afterEach(inject(function($$jqLite) {
+  afterEach(inject(function() {
     dealoc(element);
   }));
 
@@ -137,7 +137,7 @@ describe("animations", function() {
       };
     }));
 
-    it("should not alter the provided options input in any way throughout the animation", inject(function($animate, $rootScope) {
+    it('should not alter the provided options input in any way throughout the animation', inject(function($animate, $rootScope) {
       var initialOptions = {
         from: { height: '50px' },
         to: { width: '50px' },
@@ -156,12 +156,12 @@ describe("animations", function() {
       expect(copiedOptions).toEqual(initialOptions);
     }));
 
-    it("should skip animations entirely if the document is hidden", function() {
+    it('should skip animations entirely if the document is hidden', function() {
       var doc;
 
       module(function($provide) {
         doc = jqLite({
-          body: document.body,
+          body: window.document.body,
           hidden: true
         });
         $provide.value('$document', doc);
@@ -252,8 +252,11 @@ describe("animations", function() {
 
           var message = '$animateProvider.classNameFilter(regex) prohibits accepting a regex value which matches/contains the "ng-animate" CSS class.';
 
-          bool ? expectation.toThrowMinErr('$animate', 'nongcls', message)
-               : expectation.not.toThrowMinErr('$animate', 'nongcls', message);
+          if (bool) {
+            expectation.toThrowMinErr('$animate', 'nongcls', message);
+          } else {
+            expectation.not.toThrowMinErr('$animate', 'nongcls', message);
+          }
         }
       });
     });
@@ -275,7 +278,7 @@ describe("animations", function() {
     });
 
     describe('enabled()', function() {
-      it("should work for all animations", inject(function($animate) {
+      it('should work for all animations', inject(function($animate) {
 
         expect($animate.enabled()).toBe(true);
 
@@ -395,6 +398,19 @@ describe("animations", function() {
 
       expect(capturedAnimation).toBeFalsy();
     }));
+
+    it('should not attempt to perform an animation on an empty jqLite collection',
+      inject(function($rootScope, $animate) {
+
+        element.html('');
+        var emptyNode = jqLite(element[0].firstChild);
+
+        $animate.addClass(emptyNode, 'some-class');
+        $rootScope.$digest();
+
+        expect(capturedAnimation).toBeFalsy();
+      })
+    );
 
     it('should perform the leave domOperation if a text node is used',
       inject(function($rootScope, $animate) {
@@ -648,7 +664,7 @@ describe("animations", function() {
         { '{}': {},
           'null': null,
           'false': false,
-          '""': "",
+          '""': '',
           '[]': [] }, function(toStyle) {
 
         inject(function($animate, $rootScope) {
@@ -761,7 +777,7 @@ describe("animations", function() {
       });
     });
 
-    it("should NOT clobber all data on an element when animation is finished",
+    it('should NOT clobber all data on an element when animation is finished',
       inject(function($animate, $rootScope) {
 
       element.data('foo', 'bar');
@@ -836,7 +852,7 @@ describe("animations", function() {
         expect(capturedAnimation).toBeFalsy();
       }));
 
-      it("should disable all child animations for atleast one turn when a structural animation is issued",
+      it('should disable all child animations for atleast one turn when a structural animation is issued',
         inject(function($animate, $rootScope, $compile, $document, $rootElement, $$AnimateRunner) {
 
         element = $compile(
@@ -1710,7 +1726,8 @@ describe("animations", function() {
       $provide.factory('$$animation', function($$AnimateRunner) {
         return function() {
           captureLog.push(capturedAnimation = arguments);
-          return runner = new $$AnimateRunner();
+          runner = new $$AnimateRunner();
+          return runner;
         };
       });
 
@@ -1957,6 +1974,18 @@ describe("animations", function() {
       $animate.flush();
       expect(count).toBe(5);
     }));
+
+    it('should not get affected by custom, enumerable properties on `Object.prototype`',
+      inject(function($animate) {
+        // eslint-disable-next-line no-extend-native
+        Object.prototype.foo = 'ENUMARABLE_AND_NOT_AN_ARRAY';
+
+        element = jqLite('<div></div>');
+        expect(function() { $animate.off(element); }).not.toThrow();
+
+        delete Object.prototype.foo;
+      })
+    );
 
     it('should fire a `start` callback when the animation starts with the matching element',
       inject(function($animate, $rootScope, $rootElement, $document) {
@@ -2505,7 +2534,7 @@ describe("animations", function() {
       describe('because the document is hidden', function() {
         beforeEach(module(function($provide) {
           var doc = jqLite({
-            body: document.body,
+            body: window.document.body,
             hidden: true
           });
           $provide.value('$document', doc);

@@ -12,9 +12,9 @@ describe('$anchorScroll', function() {
         var mockedWin = {
           scrollTo: jasmine.createSpy('$window.scrollTo'),
           scrollBy: jasmine.createSpy('$window.scrollBy'),
-          document: document,
+          document: window.document,
           getComputedStyle: function(elem) {
-            return getComputedStyle(elem);
+            return window.getComputedStyle(elem);
           }
         };
 
@@ -184,7 +184,7 @@ describe('$anchorScroll', function() {
         expectScrollingTo('id=abc')));
 
 
-      it('should scroll to top if hash == "top" and no matching element', inject(
+      it('should scroll to top if hash === "top" and no matching element', inject(
         changeHashAndScroll('top'),
         expectScrollingToTop));
 
@@ -251,7 +251,7 @@ describe('$anchorScroll', function() {
         expectScrollingTo('id=abc')));
 
 
-      it('should scroll to top if hash == "top" and no matching element', inject(
+      it('should scroll to top if hash === "top" and no matching element', inject(
         callAnchorScroll('top'),
         expectScrollingToTop));
 
@@ -260,6 +260,18 @@ describe('$anchorScroll', function() {
         addElements('id=top'),
         callAnchorScroll('top'),
         expectScrollingTo('id=top')));
+
+
+      it('should scroll to element with id "7" if present, with a given hash of type number', inject(
+        addElements('id=7'),
+        callAnchorScroll(7),
+        expectScrollingTo('id=7')));
+
+
+      it('should scroll to element with id "7" if present, with a given hash of type string', inject(
+        addElements('id=7'),
+        callAnchorScroll('7'),
+        expectScrollingTo('id=7')));
     });
   });
 

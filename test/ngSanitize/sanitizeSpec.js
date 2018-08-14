@@ -19,11 +19,10 @@ describe('HTML', function() {
 
   describe('htmlParser', function() {
     /* global htmlParser */
-    if (angular.isUndefined(window.htmlParser)) return;
 
     var handler, start, text, comment;
     beforeEach(function() {
-      text = "";
+      text = '';
       start = null;
       handler = {
         start: function(tag, attrs) {
@@ -129,6 +128,17 @@ describe('HTML', function() {
 
   it('should remove attrs', function() {
     expectHTML('a<div style="abc">b</div>c').toEqual('a<div>b</div>c');
+  });
+
+  it('should handle large datasets', function() {
+    // Large is non-trivial to quantify, but handling ~100,000 should be sufficient for most purposes.
+    var largeNumber = 17; // 2^17 = 131,072
+    var result = '<div>b</div>';
+    // Ideally we would use repeat, but that isn't supported in IE.
+    for (var i = 0; i < largeNumber; i++) {
+      result += result;
+    }
+    expectHTML('a' + result + 'c').toEqual('a' + result + 'c');
   });
 
   it('should remove style', function() {
@@ -309,13 +319,12 @@ describe('HTML', function() {
 
   describe('htmlSanitizerWriter', function() {
     /* global htmlSanitizeWriter: false */
-    if (angular.isUndefined(window.htmlSanitizeWriter)) return;
 
     var writer, html, uriValidator;
     beforeEach(function() {
       html = '';
       uriValidator = jasmine.createSpy('uriValidator');
-      writer = htmlSanitizeWriter({push:function(text) {html+=text;}}, uriValidator);
+      writer = htmlSanitizeWriter({push:function(text) {html += text;}}, uriValidator);
     });
 
     it('should write basic HTML', function() {
@@ -349,7 +358,7 @@ describe('HTML', function() {
     });
 
     it('should ignore unknown attributes', function() {
-      writer.start('div', {unknown:""});
+      writer.start('div', {unknown:''});
       expect(html).toEqual('<div>');
     });
 
@@ -481,13 +490,13 @@ describe('HTML', function() {
     });
 
     it('should not be URI', function() {
-      /* jshint scripturl: true */
+      // eslint-disable-next-line no-script-url
       expect('javascript:alert').not.toBeValidUrl();
     });
 
     describe('javascript URLs', function() {
       it('should ignore javascript:', function() {
-        /* jshint scripturl: true */
+        // eslint-disable-next-line no-script-url
         expect('JavaScript:abc').not.toBeValidUrl();
         expect(' \n Java\n Script:abc').not.toBeValidUrl();
         expect('http://JavaScript/my.js').toBeValidUrl();
