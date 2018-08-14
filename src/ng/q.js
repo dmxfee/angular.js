@@ -621,12 +621,8 @@ function qFactory(nextTick, exceptionHandler) {
   $Q.when = when;
   $Q.resolve = resolve;
   $Q.all = all;
-<<<<<<< HEAD
   $Q.getPromiseCount = getPromiseCount;
-=======
-  $Q.promisesCount = countPromises;
   $Q.race = race;
->>>>>>> cda813ebc04193b683a0ad7a2dbd6dd792ec2ddf
 
   return $Q;
 }
