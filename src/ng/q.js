@@ -263,7 +263,7 @@ function qFactory(nextTick, exceptionHandler) {
     return d;
   };
 
-  var countPromises = function() {
+  var getPromiseCount = function() {
     return promisesCount;
   }
 
@@ -608,7 +608,7 @@ function qFactory(nextTick, exceptionHandler) {
   $Q.when = when;
   $Q.resolve = resolve;
   $Q.all = all;
-  $Q.promisesCount = countPromises;
+  $Q.getPromiseCount = getPromiseCount;
 
   return $Q;
 }
