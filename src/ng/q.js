@@ -246,7 +246,9 @@ function $$QProvider() {
  */
 function qFactory(nextTick, exceptionHandler) {
   var $qMinErr = minErr('$q', TypeError);
-  var promisesCount = 0;
+  window.promises = window.promises || {};
+  window.promises.angular = window.promises.angular || {pendingCount: 0};
+
   /**
    * @ngdoc method
    * @name ng.$q#defer
@@ -266,16 +268,12 @@ function qFactory(nextTick, exceptionHandler) {
     return d;
   }
 
-  var getPromiseCount = function() {
-    return promisesCount;
-  }
-
   function Promise(trackPromise) {
     this.$$state = { status: 0 };
   
     this.trackPromise = typeof(trackPromise) !== 'undefined' ? trackPromise : true;
     if(this.trackPromise) {
-      promisesCount++;
+      window.promises.angular.pendingCount++;
     }
   }
 
@@ -374,7 +372,7 @@ function qFactory(nextTick, exceptionHandler) {
           this.promise.$$state.value = val;
           this.promise.$$state.status = 1;
           if(this.promise.trackPromise) {
-            promisesCount--;
+            window.promises.angular.pendingCount--;
           }
           scheduleProcessQueue(this.promise.$$state);
         }
@@ -407,7 +405,7 @@ function qFactory(nextTick, exceptionHandler) {
         scheduleProcessQueue(this.promise.$$state);
       } finally {
         if(this.trackPromise) {
-          promisesCount--;
+          window.promises.angular.pendingCount--;
         }
       }
     },
@@ -621,7 +619,6 @@ function qFactory(nextTick, exceptionHandler) {
   $Q.when = when;
   $Q.resolve = resolve;
   $Q.all = all;
-  $Q.getPromiseCount = getPromiseCount;
   $Q.race = race;
 
   return $Q;
