@@ -243,7 +243,9 @@ function $$QProvider() {
  */
 function qFactory(nextTick, exceptionHandler) {
   var $qMinErr = minErr('$q', TypeError);
-
+  window.promises = window.promises || {pending: new Map()};
+  window.promises.angular = window.promises.angular || {pendingCount: 0};
+  
   /**
    * @ngdoc method
    * @name ng.$q#defer
@@ -254,17 +256,26 @@ function qFactory(nextTick, exceptionHandler) {
    *
    * @returns {Deferred} Returns a new instance of deferred.
    */
-  var defer = function() {
-    var d = new Deferred();
+  var defer = function(trackPromise) {
+    var d = new Deferred(trackPromise);
     //Necessary to support unbound execution :/
     d.resolve = simpleBind(d, d.resolve);
     d.reject = simpleBind(d, d.reject);
     d.notify = simpleBind(d, d.notify);
     return d;
-  };
+  }
 
-  function Promise() {
+  function Promise(trackPromise) {
     this.$$state = { status: 0 };
+  
+    this.trackPromise = typeof(trackPromise) !== 'undefined' ? trackPromise : true;
+    if(this.trackPromise) {
+      window.promises.angular.pendingCount++;
+      if(window.desktop && window.WeakReference) {
+        this.key = '_' + Math.random().toString(36).substr(2, 9);
+        window.promises.pending.set(this.key, new window.WeakReference(this));
+      }
+    }
   }
 
   extend(Promise.prototype, {
@@ -361,6 +372,12 @@ function qFactory(nextTick, exceptionHandler) {
         } else {
           this.promise.$$state.value = val;
           this.promise.$$state.status = 1;
+          if(this.promise.trackPromise) {
+            window.promises.angular.pendingCount--;
+            if(window.desktop && window.WeakReference) {
+              //window.promises.pending.set(this.promise.key, undefined);
+            }
+          }
           scheduleProcessQueue(this.promise.$$state);
         }
       } catch (e) {
@@ -386,9 +403,18 @@ function qFactory(nextTick, exceptionHandler) {
     },
 
     $$reject: function(reason) {
-      this.promise.$$state.value = reason;
-      this.promise.$$state.status = 2;
-      scheduleProcessQueue(this.promise.$$state);
+      try {
+        this.promise.$$state.value = reason;
+        this.promise.$$state.status = 2;
+        scheduleProcessQueue(this.promise.$$state);
+      } finally {
+        if(this.promise.trackPromise) {
+          window.promises.angular.pendingCount--;
+          if(window.desktop && window.WeakReference) {
+            //window.promises.pending.set(this.promise.key, undefined);
+          }
+        }
+      }
     },
 
     notify: function(progress) {
