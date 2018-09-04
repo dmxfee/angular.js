@@ -198,6 +198,24 @@ function $IntervalProvider() {
       return false;
     };
 
+    /**
+     * @ngdoc method
+     * @name $interval#cancelAll
+     *
+     * @description
+     * Cancels all intervals that are still pending
+     *
+     * @returns {Object} Returns count of successful and failed cancelled intervals
+     */
+    interval.cancelAll = function() {
+      var success = 0;
+      var fail = 0;
+      for (var $$intervalId in intervals) {
+        interval.cancel(intervals[$$intervalId]) ? success++ : fail++;
+      }
+      return {'success': success, 'failure': fail};
+    };
+
     return interval;
   }];
 }
