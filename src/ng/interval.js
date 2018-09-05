@@ -203,19 +203,18 @@ function $IntervalProvider() {
      * @description
      * Cancels all intervals that are still pending
      *
-     * @returns {Object} Returns count of successful and failed cancelled intervals
+     * @returns {boolean} Returns true if all cancellations succeeded, false otherwise
      */
     interval.cancelAll = function() {
-      var success = 0;
-      var fail = 0;
+      var errorOccurred = false;
       for (var $$intervalId in intervals) {
         try {
-          interval.cancel(intervals[$$intervalId].promise) ? success++ : fail++;
+          interval.cancel(intervals[$$intervalId].promise);
         } catch (err) {
-          fail++;
+          errorOccurred = true;
         }
       }
-      return {'success': success, 'failure': fail};
+      return !errorOccurred && equals({}, intervals);
     };
 
     return interval;

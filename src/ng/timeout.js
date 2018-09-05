@@ -100,19 +100,18 @@ function $TimeoutProvider() {
     * @description
     * Cancels all timeouts that are still pending
     *
-    * @returns {Object} Returns count of successful and failed cancelled timeouts
+    * @returns {boolean} Returns true if all cancellations succeeded, false otherwise
     */
    timeout.cancelAll = function() {
-     var success = 0;
-     var fail = 0;
+     var errorOccurred = false;
      for (var $$timeoutId in deferreds) {
       try {
-        timeout.cancel(deferreds[$$timeoutId].promise) ? success++ : fail++;
+        timeout.cancel(deferreds[$$timeoutId].promise);
       } catch (err) {
-        fail++;
+        errorOccurred = true;
       }
-     }
-     return {'success': success, 'failure': fail};
+    }
+    return !errorOccurred && equals({}, deferreds);
    };
 
     return timeout;
