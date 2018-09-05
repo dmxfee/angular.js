@@ -103,17 +103,16 @@ function $TimeoutProvider() {
     * @returns {Object} Returns count of successful and failed cancelled timeouts
     */
    timeout.cancelAll = function() {
-     var success = 0;
-     var fail = 0;
-     for (var $$timeoutId in deferreds) {
-      try {
-        timeout.cancel(deferreds[$$timeoutId].promise) ? success++ : fail++;
-      } catch (err) {
-        fail++;
-      }
+    var errorOccurred = false;
+    for (var $$timeoutId in deferreds) {
+     try {
+       timeout.cancel(deferreds[$$timeoutId].promise);
+     } catch (err) {
+       errorOccurred = true;
      }
-     return {'success': success, 'failure': fail};
-   };
+   }
+   return !errorOccurred && equals({}, deferreds);
+  };
 
     return timeout;
   }];
