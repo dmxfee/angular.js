@@ -91,6 +91,28 @@ function $TimeoutProvider() {
       }
       return false;
     };
+    
+    
+    /**
+    * @ngdoc method
+    * @name $timeout#cancelAll
+    *
+    * @description
+    * Cancels all timeouts that are still pending
+    *
+    * @returns {Object} Returns count of successful and failed cancelled timeouts
+    */
+   timeout.cancelAll = function() {
+    var errorOccurred = false;
+    for (var $$timeoutId in deferreds) {
+     try {
+       timeout.cancel(deferreds[$$timeoutId].promise);
+     } catch (err) {
+       errorOccurred = true;
+     }
+   }
+   return !errorOccurred && equals({}, deferreds);
+  };
 
     return timeout;
   }];
