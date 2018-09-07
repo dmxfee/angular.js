@@ -100,7 +100,7 @@ function $TimeoutProvider() {
     * @description
     * Cancels all timeouts that are still pending
     *
-    * @returns {Object} Returns count of successful and failed cancelled timeouts
+    * @returns {boolean} Returns true if all timeouts were successfully cancelled, false otherwise
     */
     timeout.cancelAll = function() {
       var errorOccurred = false;
