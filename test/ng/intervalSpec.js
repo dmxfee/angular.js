@@ -284,9 +284,9 @@ describe('$interval', function() {
   describe('cancelAll', function() {
     it('should cancel all pending intervals', inject(function ($interval, $window) {
       var counter = 0;
-      var promise = $interval(function () {
-        counter++;
-      }, 1000);
+      $interval(function () { counter++; }, 1000);
+      $interval(function () { counter++; }, 1000);
+      $interval(function () { counter++; }, 1000);
 
       var didCancelAllSucceed = $interval.cancelAll();
       $window.flush(2001);

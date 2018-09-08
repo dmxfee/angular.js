@@ -229,9 +229,9 @@ describe('$timeout', function() {
   describe('cancelAll', function() {
     it('should cancel all pending timeouts', inject(function ($timeout, $browser) {
       var counter = 0;
-      var promise = $timeout(function () {
-        counter++;
-      }, 1000);
+      $timeout(function () { counter++; }, 1000);
+      $timeout(function () { counter++; }, 1000);
+      $timeout(function () { counter++; }, 1000);
 
       var didCancelAllSucceed = $timeout.cancelAll();
       expect(function() {$timeout.flush();}).toThrowError();
