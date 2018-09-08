@@ -204,7 +204,7 @@ function $IntervalProvider() {
      * @description
      * Cancels all intervals that are still pending
      *
-     * @returns {Object} Returns count of successful and failed cancelled intervals
+     * @returns {boolean} Returns `true` if all timeouts were successfully cancelled, `false` otherwise
      */
     interval.cancelAll = function() {
       var errorOccurred = false;
