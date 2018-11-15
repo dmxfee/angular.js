@@ -1140,6 +1140,30 @@ describe('q', function() {
       });
 
 
+      it('reject and rejectSilently should follow the same chain rejection', function() {
+        mockPromiseTracker.untrackedPromises = [];
+        var deferred1 = defer();
+        deferred1.promise
+        .then(() => {}).catch((err) => {})
+        .then(() => {}).catch((err) => {});
+
+        deferred1.reject();
+        mockNextTick.flush();
+        var rejectUntrackedCount = mockPromiseTracker.untrackedPromises.length;
+
+        mockPromiseTracker.untrackedPromises = [];
+        var deferred2 = defer();
+        deferred2.promise
+        .then(() => {}).catch((err) => {})
+        .then(() => {}).catch((err) => {});
+
+        deferred2.rejectSilently();
+        mockNextTick.flush();
+        var rejectSilentlyUntrackedCount = mockPromiseTracker.untrackedPromises.length;
+
+        expect(rejectSilentlyUntrackedCount).toBe(rejectUntrackedCount);
+      });
+
       it('should do nothing if a promise was previously resolved', function() {
         promise.then(success(1), error(1));
         expect(logStr()).toBe('');
