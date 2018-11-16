@@ -118,7 +118,8 @@
  * - `reject(reason)` – rejects the derived promise with the `reason`. This is equivalent to
  *   resolving it with a rejection constructed via `$q.reject`.
  * - `rejectSilently()` – rejects the derived promise. This is equivalent to reject with the 
- *   exception that it won't invoke the errorCallback registered for the promise.
+ *   exception that it won't invoke the errorCallback registered for the promise. In addition it
+ *   rejects the promise chain syncronously
  * - `notify(value)` - provides updates on the status of the promise's execution. This may be called
  *   multiple times before the promise is either resolved or rejected.
  *
@@ -337,7 +338,11 @@ function qFactory(nextTick, exceptionHandler, promiseTracker) {
   function scheduleProcessQueue(state) {
     if (state.processScheduled || !state.pending) return;
     state.processScheduled = true;
-    nextTick(function() { processQueue(state); });
+    if (state.isSilentReject) {
+      processQueue(state);
+    } else {
+      nextTick(function() { processQueue(state); });
+    }
   }
 
   function Deferred() {
