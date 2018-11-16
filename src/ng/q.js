@@ -398,8 +398,9 @@ function qFactory(nextTick, exceptionHandler, promiseTracker) {
     },
 
     rejectSilently: function() {
+      if (this.promise.$$state.status) return;
       this.promise.$$state.isSilentReject = true;
-      this.reject();
+      this.$$reject(reason);
     },
 
     reject: function(reason) {
